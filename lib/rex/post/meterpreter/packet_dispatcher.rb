@@ -178,7 +178,7 @@ module PacketDispatcher
     if timeout.nil?
       return nil
     elsif response.nil?
-      raise Rex::TimeoutError.new("Send timed out")
+      raise Rex::TimeoutError.new("Send timed out. Timeout currently #{timeout} seconds, you can configure this with %grnsessions --interact <id> --timeout <value>%clr")
     elsif (response.result != 0)
       einfo = lookup_error(response.result)
       e = RequestError.new(packet.method, einfo, response.result)
