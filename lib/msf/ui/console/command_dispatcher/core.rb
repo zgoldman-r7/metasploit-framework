@@ -31,10 +31,13 @@ class Core
   include Msf::Ui::Console::CommandDispatcher::Common
   include Msf::Ui::Console::ModuleOptionTabCompletion
 
+  attr_accessor :on_error_proc
+
   # Session command options
   @@sessions_opts = Rex::Parser::Arguments.new(
     ["-c", "--command"]              => [ true,  "Run a command on the session given with -i, or all", "<command>"               ],
     ["-C", "--meterpreter-command"]  => [ true,  "Run a Meterpreter Command on the session given with -i, or all", "<command>"   ],
+    # ["-z", "--checkin"]              => [ true,  "Gets sessions that haven't checked in for longer than specified time"          ],
     ["-h", "--help"]                 => [ false, "Help banner"                                                                   ],
     ["-i", "--interact"]             => [ true,  "Interact with the supplied session ID", "<id>"                                 ],
     ["-l", "--list"]                 => [ false, "List all active sessions"                                                      ],
@@ -957,6 +960,15 @@ class Core
     print_line
   end
 
+  def log_on_timeout_error(message)
+    puts "hi\n"
+    proc do |e|
+        next unless e.is_a?(RexTimeoutError)
+        # elog(e)
+        puts message + Time.now.to_s
+    end
+  end
+
   def list_plugins
     plugin_directories = {
       'Framework' => Msf::Config.plugin_directory,
@@ -1423,6 +1435,8 @@ class Core
   #
   def cmd_sessions(*args)
     begin
+    require 'pry-byebug'
+    # binding.pry
     method   = nil
     quiet    = false
     show_active = false
@@ -1530,7 +1544,7 @@ class Core
     end
 
     last_known_timeout = nil
-
+    # binding.pry
     # Now, perform the actual method
     case method
     when 'cmd'
@@ -1678,6 +1692,57 @@ class Core
           print_status("Starting interaction with #{session.name}...\n") unless quiet
           begin
             self.active_session = session
+            # 1) Add a flag!
+            # self.active_session.interactive_state = :console
+            # inside thecode that catches the exception:
+            # raise Timeout, 'custom message' if interactive_state == :console
+            #
+            # Tihis is bad because it breaks the open closed principal,
+            # i.e. requires modifciation of existing code
+
+            # 2) Pass a custom error message that we want
+            # self.active_session.#{exception_class_name}_error_message = 'custom error message'
+            # self.active_session.response_timeout_error_message = 'custom error message'
+            # rescue Timeout => e
+            #    if response_timeout_error_message
+            #        raiseresponse_timeout_error_message  i
+            #     else
+            #       raise e
+            #
+            # Tihis is bad because it breaks the open closed principal,
+            # i.e. requires modifciation of existing code
+
+
+            # 3) Is there something better?
+            # self.active_session.error_messages = {
+            #     Rex::Timeout => 'This custom message',
+            #     FileNotFound => '....',
+            # }
+            # 
+            # A step closer, but still not super flexible
+
+            # 4) Callbacks?
+            # self.active_session.on_error = proc do |e|
+            #   return unless e.is_a?(Rex::TimeoutError)
+            #
+            #   print_error("you need to do something else")
+            #   do_things()
+            #   raise ...
+            # end
+
+
+            
+
+            # self.active_session.response_timeout_error_message = 'oh rerun with the sessions --interactive --timeout flag set'
+            session.on_error_proc = log_on_timeout_error('yo, do interact options  here')
+            # binding.pry
+            # session.on_error_proc = proc do |e|
+            #   binding.pry
+            #   next unless e.is_a?(RexTimeoutError)
+            #   puts "uh oh"
+            # end
+            binding.pry
+
             sid = session.interact(driver.input.dup, driver.output)
             self.active_session = nil
             driver.input.reset_tab_completion if driver.input.supports_readline
@@ -1709,6 +1774,7 @@ class Core
             last_known_timeout = session.response_timeout
             session.response_timeout = response_timeout
           end
+          # self.active_sessio.response_timeout_error_message = 'oh rerun with the sessions --script --timeout flag set'
           begin
             print_status("Session #{sess_id} (#{session.session_host}):")
             print_status("Running #{script} on #{session.type} session" +
@@ -1754,6 +1820,7 @@ class Core
         end
       end
     when 'list', 'list_inactive', nil
+      # binding.pry
       print_line
       print(Serializer::ReadableText.dump_sessions(framework, show_active: show_active, show_inactive: show_inactive, show_extended: show_extended, verbose: verbose, search_term: search_term))
       print_line

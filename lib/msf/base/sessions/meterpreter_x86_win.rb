@@ -10,6 +10,7 @@ module Sessions
 #
 ###
 class Meterpreter_x86_Win < Msf::Sessions::Meterpreter
+  # ..here?
   def initialize(rstream,opts={})
     super
     self.base_platform = 'windows'

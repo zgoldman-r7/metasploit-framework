@@ -1,5 +1,6 @@
 # -*- coding: binary -*-
 require 'rex/post/meterpreter'
+require 'pry-byebug'
 
 module Rex
 module Post
@@ -100,6 +101,26 @@ class Console
   def run_command(dispatcher, method, arguments)
     begin
       super
+    # rescue Rex::Timeout => e
+      # option 1)
+      # if interactive_state == :console_in_script
+      #   raise e, 'custom message' 
+      # elsif interactive_state == :console_in_script
+      #   raise e, 'custom message' 
+
+      # options 2)
+        # rescue Timeout => e
+        #    if response_timeout_error_message
+        #        raise e, response_timeout_error_messag
+        #     else
+        #       raise e
+        #
+
+        
+    rescue Rex::TimeoutError => e
+      binding.pry
+      log_error(e.message)
+      log_error("console")
     rescue Timeout::Error
       log_error("Operation timed out.")
     rescue RequestError => info
