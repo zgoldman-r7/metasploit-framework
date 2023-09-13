@@ -984,8 +984,21 @@ class ReadableText
       return out
     end
 
+    no_stale_out = true
+
     framework.sessions.each_sorted do |k|
       session = framework.sessions[k]
+
+      if opts[:stale]
+        unless session.respond_to?(:last_checkin) || session.last_checkin
+          next
+        else
+          if (Time.now.to_i - session.last_checkin.to_i) > opts[:stale_time].to_i
+            next
+          end
+        end
+        no_stale_out = false
+      end
 
       sess_info    = session.info.to_s
       sess_id      = session.sid.to_s
@@ -1033,6 +1046,10 @@ class ReadableText
       end
 
       out << "\n"
+    end
+
+    if opts[:stale] && no_stale_out
+      out << "No active sessions."
     end
 
     out << "\n"

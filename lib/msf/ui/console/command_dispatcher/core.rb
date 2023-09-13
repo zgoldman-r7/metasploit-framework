@@ -48,6 +48,7 @@ class Core
     ["-t", "--timeout"]              => [ true,  "Set a response timeout (default: 15)", "<seconds>"                             ],
     ["-S", "--search"]               => [ true,  "Row search filter.", "<filter>"                                                ],
     ["-x", "--list-extended"]        => [ false, "Show extended information in the session table"                                ],
+    ["-e", "--stale"]                => [ true, "Restrict command to sessions without a recent checkin", "<seconds>"             ],
     ["-n", "--name"]                 => [ true,  "Name or rename a session by ID", "<id> <name>"                                 ])
 
 
@@ -56,7 +57,7 @@ class Core
     ["-k", "--kill"]            => [ true,  "Terminate the specified thread ID.", "<id>"             ],
     ["-K", "--kill-all"]        => [ false, "Terminate all non-critical threads."                    ],
     ["-i", "--info"]            => [ true,  "Lists detailed information about a thread.", "<id>"     ],
-    ["-l", "--list"] => [ false, "List all background threads."                           ],
+    ["-l", "--list"]            => [ false, "List all background threads."                           ],
     ["-v", "--verbose"]         => [ false, "Print more detailed info.  Use with -i and -l"          ])
 
   @@tip_opts = Rex::Parser::Arguments.new(
@@ -1428,11 +1429,13 @@ class Core
     show_active = false
     show_inactive = false
     show_extended = false
+    stale = false
     verbose  = false
     sid      = nil
     cmds     = []
     script   = nil
     response_timeout = 15
+    stale_time = 30
     search_term = nil
     session_name = nil
     has_script_arguments = false
@@ -1463,6 +1466,10 @@ class Core
         when "-d", "--list-inactive"
           show_inactive = true
           method = 'list_inactive'
+        when "-e", "--stale"
+          stale_time = val if val
+          stale = true
+          verbose = true
         when "-x", "--list-extended"
           show_extended = true
         when "-v", "--list-verbose"
@@ -1650,16 +1657,30 @@ class Core
         end
       end
     when 'killall'
-      print_status("Killing all sessions...")
+      if stale
+        print_status("Killing all stale sessions...")
+      else
+        print_status("Killing all sessions...")
+      end
       framework.sessions.each_sorted.reverse_each do |s|
         session = framework.sessions.get(s)
+        kill = true
         if session
+          if stale
+            unless session.respond_to?(:last_checkin) || session.last_checkin
+              kill = false
+            else
+              if (Time.now.to_i - session.last_checkin.to_i) < stale_time.to_i
+                kill = false
+              end
+            end
+          end
           if session.respond_to?(:response_timeout)
             last_known_timeout = session.response_timeout
             session.response_timeout = response_timeout
           end
           begin
-            session.kill
+            session.kill if kill
           ensure
             if session.respond_to?(:response_timeout) && last_known_timeout
               session.response_timeout = last_known_timeout
@@ -1755,7 +1776,7 @@ class Core
       end
     when 'list', 'list_inactive', nil
       print_line
-      print(Serializer::ReadableText.dump_sessions(framework, show_active: show_active, show_inactive: show_inactive, show_extended: show_extended, verbose: verbose, search_term: search_term))
+      print(Serializer::ReadableText.dump_sessions(framework, show_active: show_active, show_inactive: show_inactive, show_extended: show_extended, verbose: verbose, search_term: search_term, stale: stale, stale_time: stale_time))
       print_line
     when 'name'
       if session_name.blank?
