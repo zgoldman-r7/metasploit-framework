@@ -48,7 +48,7 @@ class Core
     ["-t", "--timeout"]              => [ true,  "Set a response timeout (default: 15)", "<seconds>"                             ],
     ["-S", "--search"]               => [ true,  "Row search filter.", "<filter>"                                                ],
     ["-x", "--list-extended"]        => [ false, "Show extended information in the session table"                                ],
-    ["-e", "--stale"]                => [ true, "Restrict command to sessions without a recent checkin", "<seconds>"             ],
+    ["--check-in"]                   => [ true, "Restrict command to sessions without a recent checkin", "<seconds>"             ],
     ["-n", "--name"]                 => [ true,  "Name or rename a session by ID", "<id> <name>"                                 ])
 
 
@@ -1466,7 +1466,7 @@ class Core
         when "-d", "--list-inactive"
           show_inactive = true
           method = 'list_inactive'
-        when "-e", "--stale"
+        when "--check-in"
           stale_time = val if val
           stale = true
           verbose = true
