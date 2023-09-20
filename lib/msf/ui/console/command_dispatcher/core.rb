@@ -13,6 +13,7 @@
 require 'msf/core/opt_condition'
 
 require 'optparse'
+require 'pry-byebug'
 
 module Msf
 module Ui
@@ -1450,7 +1451,15 @@ class Core
     else
       # Parse the command options
       @@sessions_opts.parse(args) do |opt, idx, val|
+        # binding.pry
+        
         next if has_script_arguments
+
+        if val == "--search" || val == '-S'
+          # binding.pry
+          matching_sessions = filter_sessions_by_search(args[(idx+1)..-1])
+          val = matching_sessions
+        end
 
         case opt
         when "-q", "--quiet"
@@ -1483,8 +1492,10 @@ class Core
           show_active = true
           method = 'list'
         when "-k", "--kill"
+          # binding.pry
           method = 'kill'
           sid = val || false
+          # end
         when "-K", "--kill-all"
           method = 'killall'
         # Run a script or module on specified sessions
@@ -1503,7 +1514,9 @@ class Core
         # Search for specific session
         when "-S", "--search"
           search_term = val
-        # Display help banner
+          # binding.pry
+          matching_sessions = filter_sessions_by_search(args[(idx+1)..-1])
+          val = matching_sessions
         when "-h", "--help"
           cmd_sessions_help
           return false
@@ -1519,6 +1532,7 @@ class Core
         end
       end
     end
+    # binding.pry
 
     if !method && sid
       method = 'interact'
@@ -1636,6 +1650,7 @@ class Core
           end
         end
     when 'kill'
+      binding.pry
       print_status("Killing the following session(s): #{session_list.join(', ')}")
       session_list.each do |sess_id|
         session = framework.sessions.get(sess_id)
@@ -1645,16 +1660,17 @@ class Core
             session.response_timeout = response_timeout
           end
           print_status("Killing session #{sess_id}")
-          begin
-            session.kill
-          ensure
-            if session.respond_to?(:response_timeout) && last_known_timeout
-              session.response_timeout = last_known_timeout
-            end
-          end
+          # begin
+          #   session.kill
+          # ensure
+          #   if session.respond_to?(:response_timeout) && last_known_timeout
+          #     session.response_timeout = last_known_timeout
+          #   end
+          # end
         else
           print_error("Invalid session identifier: #{sess_id}")
         end
+        # binding.pry
       end
     when 'killall'
       if stale
@@ -1813,6 +1829,54 @@ class Core
     self.active_session = nil
 
     true
+  end
+
+  def filter_sessions_by_search(search_term)
+    matching_sessions = []
+    framework.sessions.each do |session_id|
+      session = framework.sessions.get(session_id[0])
+      next unless session
+
+      if session.last_checkin && evaluate_search_criteria(session, search_term.last)
+        matching_sessions << session_id[0].to_s
+      end
+    end
+    matching_sessions unless matching_sessions.length() == 1
+    matching_sessions[0]
+  end
+
+  def evaluate_search_criteria(session, search_term)
+    parts = search_term.split(":")
+    return false unless parts.length == 3
+
+    field = parts[0]
+    operator = parts[1]
+    value = parts[2]
+
+    case field
+    when "last_checkin"
+      checkin_time = session.last_checkin
+      threshold_time = Time.now - parse_duration(value)
+      case operator
+      when "before"
+        return checkin_time > threshold_time
+      when "after"
+        return checkin_time < threshold_time
+      end
+    end
+  end
+
+  def parse_duration(duration)
+    case duration
+    when /(\d+)h/
+      return $1.to_i * 3600
+    when /(\d+)m/
+      return $1.to_i * 60
+    when /(\d+)s/
+      return $1.to_i
+    else
+      return 0
+    end
   end
 
   #
