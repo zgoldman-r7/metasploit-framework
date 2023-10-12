@@ -4,6 +4,7 @@ require 'rex/post/meterpreter/command_mapper'
 require 'rex/post/meterpreter/packet_response_waiter'
 require 'rex/exceptions'
 require 'pathname'
+require 'pry-byebug'
 
 module Rex
 module Post
@@ -177,8 +178,8 @@ module PacketDispatcher
 
     if timeout.nil?
       return nil
-    elsif response.nil?
-      raise Rex::TimeoutError.new("Send timed out. Timeout currently #{timeout} seconds, you can configure this with %grnsessions --interact <id> --timeout <value>%clr")
+    elsif response.nil? 
+      raise Rex::TimeoutError.new("Send timed out.")
     elsif (response.result != 0)
       einfo = lookup_error(response.result)
       e = RequestError.new(packet.method, einfo, response.result)

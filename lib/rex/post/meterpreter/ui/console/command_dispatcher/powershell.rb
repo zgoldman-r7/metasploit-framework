@@ -1,10 +1,12 @@
 # -*- coding: binary -*-
 require 'rex/post/meterpreter'
+require 'pry-byebug'
 
 module Rex
 module Post
 module Meterpreter
 module Ui
+
 
 ###
 #
@@ -16,6 +18,8 @@ class Console::CommandDispatcher::Powershell
   Klass = Console::CommandDispatcher::Powershell
 
   include Console::CommandDispatcher
+
+  # attr_accessor :on_error_proc -
 
   #
   # Name for this dispatcher
@@ -184,8 +188,12 @@ class Console::CommandDispatcher::Powershell
         opts[:session_id] = val
       end
     }
-
-    result = client.powershell.execute_string(opts)
+    begin
+      result = client.powershell.execute_string(opts)
+    rescue Rex::TimeoutError
+      binding.pry
+      raise Rex::TimeoutError, "Send timed out. Timeout currently #{client.response_timeout} seconds (source: powershell.rb)" #, you can configure this with sessions --interact <id> --timeout <value>%clr"
+    end
     print_good("Command execution completed:\n#{result}")
   end
 

@@ -18,6 +18,8 @@ module Msf
 ###
 class SessionManager < Hash
 
+  # on_error_proc here?
+  attr_accessor :on_error_proc
   include Framework::Offspring
 
   LAST_SEEN_INTERVAL = 60 * 2.5

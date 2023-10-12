@@ -1,6 +1,7 @@
 # -*- coding: binary -*-
 module Rex
 module Ui
+require 'pry-byebug'
 
 ###
 #
@@ -22,7 +23,7 @@ module Interactive
   # rstream to user_output.
   #
   def interact(user_input, user_output)
-
+    # binding.pry
     # Detach from any existing console
     if self.interacting
       detach()
@@ -48,7 +49,7 @@ module Interactive
 
     # As long as we're interacting...
     while (self.interacting == true)
-
+      # binding.pry
       begin
         _interact
 
@@ -68,7 +69,7 @@ module Interactive
     end
 
     begin
-
+      # binding.pry
       # Restore the suspend handler
       restore_suspend
 
@@ -127,6 +128,7 @@ module Interactive
 
   attr_accessor :on_print_proc
   attr_accessor :on_command_proc
+  attr_accessor :on_error_proc
 
 protected
 

@@ -527,6 +527,7 @@ module DispatcherShell
         begin
           if (dispatcher.commands.has_key?(method) or dispatcher.deprecated_commands.include?(method))
             self.on_command_proc.call(line.strip) if self.on_command_proc
+            # INVESTIGATE
             run_command(dispatcher, method, arguments)
             cmd_status = :handled
           elsif cmd_status.nil?
