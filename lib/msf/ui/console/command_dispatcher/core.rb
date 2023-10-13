@@ -961,23 +961,11 @@ class Core
   end
 
   def log_on_timeout_error(message)
-    # Proc.new {
     proc do |e|
-      binding.pry
-      next unless e.is_a?(RexTimeoutError)
+      next unless e.is_a?(Rex::TimeoutError)
       elog(e)
+      puts message
     end
-    # }
-    # return "5"
-    # puts "hi\n"
-    # binding.pry
-    # proc do |e|
-      # binding.pry
-    # next unless e.is_a?(RexTimeoutError)
-    # elog(e)
-    # "we in here baby" if e.is_a(RexTimeoutError)
-    # proc
-    # end
   end
 
   def list_plugins
@@ -1745,7 +1733,7 @@ class Core
             
 
             # self.active_session.response_timeout_error_message = 'oh rerun with the sessions --interactive --timeout flag set'
-            session.on_error_proc = log_on_timeout_error('yo, do interact options  here')
+            session.on_error_proc = log_on_timeout_error("Send timed out. Timeout currently #{session.response_timeout} seconds, you can configure this with sessions --interact <id> --timeout <value>")
             # binding.pry
             # session.on_error_proc = proc do |e|
             #   binding.pry

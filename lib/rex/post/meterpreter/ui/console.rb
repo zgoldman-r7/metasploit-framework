@@ -118,10 +118,10 @@ class Console
 
         
     rescue Rex::TimeoutError => e
-      binding.pry
+      # binding.pry
       self.client.on_error_proc.call(e) if self.client.on_error_proc
       # log_error(e.message)
-      log_error("ZIPPEEEE")
+      # log_error("ZIPPEEEE")
     rescue Timeout::Error
       log_error("Operation timed out.")
     rescue RequestError => info
