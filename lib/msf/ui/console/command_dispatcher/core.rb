@@ -11,7 +11,7 @@
 
 
 require 'msf/core/opt_condition'
-
+require 'pry-byebug'
 require 'optparse'
 
 module Msf
@@ -961,14 +961,23 @@ class Core
   end
 
   def log_on_timeout_error(message)
-    puts "hi\n"
-    binding.pry
+    # Proc.new {
     proc do |e|
       binding.pry
       next unless e.is_a?(RexTimeoutError)
-      # elog(e)
-      puts message + Time.now.to_s
+      elog(e)
     end
+    # }
+    # return "5"
+    # puts "hi\n"
+    # binding.pry
+    # proc do |e|
+      # binding.pry
+    # next unless e.is_a?(RexTimeoutError)
+    # elog(e)
+    # "we in here baby" if e.is_a(RexTimeoutError)
+    # proc
+    # end
   end
 
   def list_plugins
@@ -1437,7 +1446,6 @@ class Core
   #
   def cmd_sessions(*args)
     begin
-    require 'pry-byebug'
     # binding.pry
     method   = nil
     quiet    = false
@@ -1685,7 +1693,7 @@ class Core
       end
     when 'interact'
       while sid
-        binding.pry
+        # binding.pry
         session = verify_session(sid)
         if session
           if session.respond_to?(:response_timeout)
@@ -1744,7 +1752,6 @@ class Core
             #   next unless e.is_a?(RexTimeoutError)
             #   puts "uh oh"
             # end
-            binding.pry
 
             sid = session.interact(driver.input.dup, driver.output)
             self.active_session = nil

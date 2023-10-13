@@ -171,7 +171,6 @@ class Console::CommandDispatcher::Powershell
 
   #
   # Execute a simple Powershell command string
-  #
   def cmd_powershell_execute(*args)
     if args.length == 0 || args.include?('-h')
       powershell_execute_usage
@@ -188,12 +187,8 @@ class Console::CommandDispatcher::Powershell
         opts[:session_id] = val
       end
     }
-    begin
-      result = client.powershell.execute_string(opts)
-    rescue Rex::TimeoutError
-      binding.pry
-      raise Rex::TimeoutError, "Send timed out. Timeout currently #{client.response_timeout} seconds (source: powershell.rb)" #, you can configure this with sessions --interact <id> --timeout <value>%clr"
-    end
+
+    result = client.powershell.execute_string(opts)
     print_good("Command execution completed:\n#{result}")
   end
 

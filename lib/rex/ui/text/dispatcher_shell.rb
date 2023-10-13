@@ -1,4 +1,5 @@
 # -*- coding: binary -*-
+require 'pry-byebug'
 require 'pp'
 require 'rex/text/table'
 require 'erb'
@@ -528,11 +529,30 @@ module DispatcherShell
           if (dispatcher.commands.has_key?(method) or dispatcher.deprecated_commands.include?(method))
             self.on_command_proc.call(line.strip) if self.on_command_proc
             # INVESTIGATE
-            run_command(dispatcher, method, arguments)
+            # binding.pry
+            begin
+              run_command(dispatcher, method, arguments)
+            rescue RexTimeoutError
+              binding.pry
+            rescue ::RexTimeoutError
+              binding.pry
+            rescue Rex::TimeoutError
+              binding.pry
+            rescue
+              binding.pry
+            rescue ::Exception => e
+              binding.pry
+            end
             cmd_status = :handled
           elsif cmd_status.nil?
             cmd_status = dispatcher.unknown_command(method, line)
           end
+        rescue RexTimeoutError
+          binding.pry
+        rescue ::RexTimeoutError
+          binding.pry
+        rescue Rex::TimeoutError
+          binding.pry
         rescue ::Interrupt
           cmd_status = :handled
           print_error("#{method}: Interrupted")
