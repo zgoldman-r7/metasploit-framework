@@ -143,7 +143,7 @@ class MetasploitModule < Msf::Post
     if datastore['PAYLOAD_OVERRIDE']
       payload_name = datastore['PAYLOAD_OVERRIDE']
       payload_info = payload_name.split('/')
-      payload = framework.payloads.create(payload_name).platform.platforms
+      payload = framework.payloads.create(payload_name)
 
       if payload_info.first == 'windows'
         psh_arch = payload.arch
