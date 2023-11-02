@@ -25,6 +25,10 @@ The LPORT option is also for the reverse Meterpreter you are upgrading to.
 This is an advanced option. If you don't want to use the default reverse Meterpreter, then you can
 use this.
 
+**PLATFORM_OVERRIDE**
+
+Used in conjunction with `PAYLOAD_OVERRIDE`. Use this to specify the platform the payload should run on.
+
 ## Scenarios
 
 **Using sessions -u**
